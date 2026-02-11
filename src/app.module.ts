@@ -14,7 +14,7 @@ import { AdminModule } from './admin/admin.module';
       type: 'postgres',
       url: process.env.SUPABASE_DB_URL,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true, // Dev only; use migrations in prod
+      // synchronize: true, // Dev only; use migrations in prod
       logging: true,
     }),
     AuthModule,
