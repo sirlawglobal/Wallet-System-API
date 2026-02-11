@@ -15,6 +15,9 @@ export class User {
   @Column({ default: 'user' })
   role: 'user' | 'admin';
 
+  @Column({ default: false })
+  verified: boolean;
+
   @Column({ type: 'varchar', nullable: true })
   otp: string | null;
 

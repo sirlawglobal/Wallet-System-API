@@ -30,20 +30,26 @@ export class AuthService {
     if (existing) throw new BadRequestException('Email in use');
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
-    const user = this.userRepo.create({ email: dto.email, password: hashedPassword });
+    const user = this.userRepo.create({ email: dto.email, password: hashedPassword, verified: false });
     await this.userRepo.save(user);
 
     // Auto-create wallet
     const wallet = this.walletRepo.create({ user, balance: 0 });
     await this.walletRepo.save(wallet);
 
-    return { message: 'User registered successfully' };
+    // Send OTP immediately after registration
+    await this.sendOtp(user.id);
+
+    return { message: 'User registered successfully. OTP sent to your email.' };
   }
 
   async login(dto: RegisterDto) { // Reuse DTO
     const user = await this.userRepo.findOne({ where: { email: dto.email } });
     if (!user || !(await bcrypt.compare(dto.password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+    if (!user.verified) {
+      throw new UnauthorizedException('Account not verified. Please verify OTP first.');
     }
     const payload = { sub: user.id, role: user.role };
     return { token: this.jwtService.sign(payload) };
@@ -83,6 +89,7 @@ export class AuthService {
   }
   user.otp = null;
   user.otpExpiry = null;
+  user.verified = true;
   await this.userRepo.save(user);
   return { message: 'OTP verified' };
 }
